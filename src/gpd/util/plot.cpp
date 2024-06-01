@@ -5,7 +5,7 @@
 
 namespace gpd {
 namespace util {
-
+#ifdef GPD_PLOT
 void Plot::plotHandGeometry(const candidate::Hand &hand,
                             const PointCloudRGBA::Ptr &cloud,
                             const candidate::HandGeometry &hand_geom,
@@ -171,14 +171,15 @@ void Plot::plotVolumes3D(
   runViewer(viewer);
 }
 
-void Plot::plotFingers3D(
+PCLVisualizer Plot::plotFingers3D(
     const std::vector<std::unique_ptr<candidate::HandSet>> &hand_set_list,
     const PointCloudRGBA::Ptr &cloud, std::string str,
     const candidate::HandGeometry &geometry, bool draw_all, bool draw_frame) {
   const Eigen::Vector3d RGB[3] = {Eigen::Vector3d(0.5, 0, 0),
                                   Eigen::Vector3d(0, 0.5, 0),
                                   Eigen::Vector3d(0, 0, 0.5)};
-  PCLVisualizer viewer = createViewer(str);
+  static PCLVisualizer viewer = createViewer(str);
+
   const int max_hands_per_set_ = num_axes_ * num_orientations_;
 
   for (int i = 0; i < hand_set_list.size(); i++) {
@@ -209,14 +210,16 @@ void Plot::plotFingers3D(
   viewer->setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
 
-  runViewer(viewer);
+  //runViewer(viewer);
+  return viewer;
 }
 
-void Plot::plotFingers3D(
+PCLVisualizer Plot::plotFingers3D(
     const std::vector<std::unique_ptr<candidate::Hand>> &hand_list,
     const PointCloudRGBA::Ptr &cloud, const std::string &str,
     const candidate::HandGeometry &geometry, bool use_same_color) {
-  PCLVisualizer viewer = createViewer(str);
+
+  static PCLVisualizer viewer = createViewer(str);
 
   double min = std::numeric_limits<float>::max();
   double max = std::numeric_limits<float>::min();
@@ -248,7 +251,8 @@ void Plot::plotFingers3D(
   viewer->setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
 
-  runViewer(viewer);
+  //runViewer(viewer);
+  return viewer;
 }
 
 void Plot::plotAntipodalHands(
@@ -311,7 +315,7 @@ void Plot::plotValidHands(
   runViewer(viewer);
 }
 
-void Plot::plotFingers3D(const std::vector<candidate::HandSet> &hand_set_list,
+PCLVisualizer Plot::plotFingers3D(const std::vector<candidate::HandSet> &hand_set_list,
                          const PointCloudRGBA::Ptr &cloud, std::string str,
                          double outer_diameter, double finger_width,
                          double hand_depth, double hand_height, bool draw_all,
@@ -320,7 +324,7 @@ void Plot::plotFingers3D(const std::vector<candidate::HandSet> &hand_set_list,
                                   Eigen::Vector3d(0, 0.5, 0),
                                   Eigen::Vector3d(0, 0, 0.5)};
 
-  PCLVisualizer viewer = createViewer(str);
+  static PCLVisualizer viewer = createViewer(str);
 
   for (int i = 0; i < hand_set_list.size(); i++) {
     for (int j = 0; j < hand_set_list[i].getHands().size(); j++) {
@@ -345,14 +349,15 @@ void Plot::plotFingers3D(const std::vector<candidate::HandSet> &hand_set_list,
   viewer->setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
 
-  runViewer(viewer);
+  //runViewer(viewer);
+  return viewer;
 }
 
-void Plot::plotFingers3D(const std::vector<candidate::Hand> &hand_list,
+PCLVisualizer Plot::plotFingers3D(const std::vector<candidate::Hand> &hand_list,
                          const PointCloudRGBA::Ptr &cloud, std::string str,
                          double outer_diameter, double finger_width,
                          double hand_depth, double hand_height, bool draw_all) {
-  PCLVisualizer viewer = createViewer(str);
+  static PCLVisualizer viewer = createViewer(str);
   Eigen::Vector3d hand_rgb(0.0, 0.5, 0.5);
 
   for (int i = 0; i < hand_list.size(); i++) {
@@ -366,7 +371,8 @@ void Plot::plotFingers3D(const std::vector<candidate::Hand> &hand_list,
   viewer->setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "cloud");
 
-  runViewer(viewer);
+  //runViewer(viewer);
+  return viewer;
 }
 
 void Plot::plotHand3D(PCLVisualizer &viewer, const candidate::Hand &hand,
@@ -742,11 +748,14 @@ void Plot::addCloudNormalsToViewer(PCLVisualizer &viewer,
 }
 
 void Plot::runViewer(PCLVisualizer &viewer) {
+#if 0
   while (!viewer->wasStopped()) {
     viewer->spinOnce(100);
     std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(1));
   }
-
+#else
+  viewer->spin();
+#endif
   viewer->close();
 }
 
@@ -794,6 +803,6 @@ pcl::PointXYZRGBA Plot::eigenVector3dToPointXYZRGBA(const Eigen::Vector3d &v) {
   p.z = v(2);
   return p;
 }
-
+#endif
 }  // namespace util
 }  // namespace gpd

@@ -60,7 +60,7 @@ class SequentialImportanceSampling {
    * \brief Constructor.
    * \param node ROS node handle
    */
-  SequentialImportanceSampling(const std::string &config_filename);
+  SequentialImportanceSampling(const char* config_filename);
 
   /**
    * \brief Detect grasps.

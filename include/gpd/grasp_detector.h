@@ -69,7 +69,7 @@ class GraspDetector {
    * \brief Constructor.
    * \param node ROS node handle
    */
-  GraspDetector(const std::string &config_filename);
+  GraspDetector(const char* config_filename);
 
   /**
    * \brief Detect grasps in a point cloud.
@@ -186,10 +186,10 @@ class GraspDetector {
   }
 
  private:
-  void printStdVector(const std::vector<int> &v, const std::string &name) const;
+  void printStdVector(const std::vector<int> &v, const char* name) const;
 
   void printStdVector(const std::vector<double> &v,
-                      const std::string &name) const;
+                      const char* name) const;
 
   std::unique_ptr<candidate::CandidatesGenerator> candidates_generator_;
   std::unique_ptr<descriptor::ImageGenerator> image_generator_;

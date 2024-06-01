@@ -9,7 +9,7 @@ const int SUM_OF_GAUSSIANS = 0;
 const int MAX_OF_GAUSSIANS = 1;
 
 SequentialImportanceSampling::SequentialImportanceSampling(
-    const std::string &config_filename) {
+    const char* config_filename) {
   // Read parameters from configuration file.
   util::ConfigFile config_file(config_filename);
   config_file.ExtractKeys();
@@ -70,9 +70,11 @@ SequentialImportanceSampling::detectGrasps(util::Cloud &cloud) {
 
   // 1. Find initial grasp hypotheses.
   cloud.subsample(num_init_samples_);
+#ifdef GPD_PLOT
   if (visualize_steps_) {
     plotter.plotSamples(cloud.getSampleIndices(), cloud.getCloudProcessed());
   }
+#endif
   std::vector<std::unique_ptr<candidate::HandSet>> hand_set_list =
       grasp_detector_->generateGraspCandidates(cloud);
   printf("Initially detected grasp candidates: %zu\n", hand_set_list.size());
@@ -88,16 +90,20 @@ SequentialImportanceSampling::detectGrasps(util::Cloud &cloud) {
   if (filter_approach_direction_) {
     hand_set_list = grasp_detector_->filterGraspsDirection(
         hand_set_list, direction_, thresh_rad_);
+#ifdef GPD_PLOT
     if (visualize_rounds_) {
       plotter.plotFingers3D(hand_set_list, cloud.getCloudOriginal(),
                             "Filtered Grasps (Approach)", hand_geom);
     }
+#endif
   }
 
+#ifdef GPD_PLOT
   if (visualize_rounds_) {
     plotter.plotFingers3D(hand_set_list, cloud.getCloudOriginal(),
                           "Initial Grasps", hand_geom);
   }
+#endif
 
   int num_rand_samples = prob_rand_samples_ * num_samples_;
   int num_gauss_samples = num_samples_ - num_rand_samples;
@@ -136,17 +142,21 @@ SequentialImportanceSampling::detectGrasps(util::Cloud &cloud) {
     if (filter_approach_direction_) {
       hand_set_list_new = grasp_detector_->filterGraspsDirection(
           hand_set_list_new, direction_, thresh_rad_);
+#ifdef GPD_PLOT
       if (visualize_steps_) {
         plotter.plotFingers3D(hand_set_list_new, cloud.getCloudOriginal(),
                               "Filtered Grasps (Approach)", hand_geom);
       }
+#endif
     }
 
+#ifdef GPD_PLOT
     if (visualize_rounds_) {
       plotter.plotSamples(samples, cloud.getCloudProcessed());
       plotter.plotFingers3D(hand_set_list_new, cloud.getCloudOriginal(),
                             "New Grasps", hand_geom);
     }
+#endif
 
     hand_set_list.insert(hand_set_list.end(),
                          std::make_move_iterator(hand_set_list_new.begin()),
@@ -156,20 +166,25 @@ SequentialImportanceSampling::detectGrasps(util::Cloud &cloud) {
            hand_set_list_new.size(), i, hand_set_list.size());
   }
 
+#ifdef GPD_PLOT
   if (visualize_steps_) {
     plotter.plotFingers3D(hand_set_list, cloud.getCloudOriginal(),
                           "Grasp Candidates", hand_geom);
   }
+#endif
 
   // 3. Classify the grasps.
   std::vector<std::unique_ptr<candidate::Hand>> valid_grasps;
   valid_grasps =
       grasp_detector_->pruneGraspCandidates(cloud, hand_set_list, min_score_);
   printf("Valid grasps: %zu\n", valid_grasps.size());
+
+#ifdef GPD_PLOT
   if (visualize_steps_) {
     plotter.plotFingers3D(valid_grasps, cloud.getCloudOriginal(),
                           "Valid Grasps", hand_geom);
   }
+#endif
 
   // 4. Cluster the grasps.
   if (clustering_->getMinInliers() > 0) {
@@ -178,10 +193,12 @@ SequentialImportanceSampling::detectGrasps(util::Cloud &cloud) {
   printf("Final result: found %zu grasps.\n", valid_grasps.size());
   printf("Total runtime: %3.4fs\n.\n", omp_get_wtime() - t0);
 
+#ifdef GPD_PLOT
   if (visualize_results_ || visualize_steps_) {
     plotter.plotFingers3D(valid_grasps, cloud.getCloudOriginal(), "Clusters",
                           hand_geom);
   }
+#endif
 
   return valid_grasps;
 }

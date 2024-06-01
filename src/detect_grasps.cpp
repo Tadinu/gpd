@@ -1,4 +1,5 @@
 #include <string>
+#include <fstream>
 
 #include <gpd/grasp_detector.h>
 
@@ -6,11 +7,42 @@ namespace gpd {
 namespace apps {
 namespace detect_grasps {
 
-bool checkFileExists(const std::string &file_name) {
+void logGraspPoses(const std::vector<std::unique_ptr<candidate::Hand>>& grasp_list,
+                   const std::string& pcd_filename)
+{
+    const std::string grasp_pose_file_path(pcd_filename + "_csv.txt");
+    std::ofstream csvFile(grasp_pose_file_path);
+    if(!csvFile.is_open()) {
+        printf("Unable to open file [%s]", grasp_pose_file_path.c_str());
+        return;
+    }
+    //
+    csvFile << "trans_x,trans_y,trans_z,rot_w,rot_x,rot_y,rot_z,width," << "\n";
+    //
+    for(auto& grasp : grasp_list) {
+        Eigen::VectorXd rotation(4);
+        Eigen::Quaterniond quat(grasp->getOrientation());
+        rotation << quat.w(), quat.x(), quat.y(), quat.z();
+
+        csvFile << grasp->vectorToString(grasp->getPosition())
+                << grasp->vectorToString(rotation)
+#if 1
+                << "0.06" << ',' << "\n";
+#else
+                << std::to_string(grasp->getGraspWidth()) << ',' << "\n";
+#endif
+    }
+
+    csvFile.close();
+
+    printf("WRITTEN TO FILE GRASP POSE LIST: %ld\n", grasp_list.size());
+}
+
+bool checkFileExists(const char* file_name) {
   std::ifstream file;
-  file.open(file_name.c_str());
+  file.open(file_name);
   if (!file) {
-    std::cout << "File " + file_name + " could not be found!\n";
+    std::cout << "File " << file_name << " could not be found!\n";
     return false;
   }
   file.close();
@@ -29,8 +61,8 @@ int DoMain(int argc, char *argv[]) {
     return (-1);
   }
 
-  std::string config_filename = argv[1];
-  std::string pcd_filename = argv[2];
+  const char* config_filename = argv[1];
+  const char* pcd_filename = argv[2];
   if (!checkFileExists(config_filename)) {
     printf("Error: config file not found!\n");
     return (-1);
@@ -80,7 +112,9 @@ int DoMain(int argc, char *argv[]) {
   }
 
   // Detect grasp poses.
-  detector.detectGrasps(cloud);
+  const auto grasp_candidates = detector.detectGrasps(cloud);
+  logGraspPoses(grasp_candidates, pcd_filename);
+  std::cout << "END" << std::endl;
 
   return 0;
 }

@@ -48,15 +48,18 @@ std::vector<std::unique_ptr<HandSet>> HandSearch::searchHands(
     return hand_set_list;
   }
 
+#ifdef GPD_PLOT
   if (plots_local_axes_) {
     plot_->plotLocalAxes(frames, cloud_cam.getCloudOriginal());
   }
+#endif
 
   // 2. Evaluate possible hand placements.
   std::cout << "Finding hand poses ...\n";
   std::vector<std::unique_ptr<HandSet>> hand_set_list =
       evalHands(cloud_cam, frames, kdtree);
 
+  std::cout << "FOUND: " << hand_set_list.size() << "hand poses" << std::endl;
   const double t2 = omp_get_wtime();
   std::cout << "====> HAND SEARCH TIME: " << t2 - t0_total << std::endl;
 
@@ -80,7 +83,9 @@ std::vector<int> HandSearch::reevaluateHypotheses(
       samples.col(i) = grasps[i]->getSample();
     }
 
+#ifdef GPD_PLOT
     plot_->plotSamples(samples, cloud);
+#endif
   }
 
   std::vector<int> nn_indices;

@@ -57,7 +57,7 @@ class ConfigFile {
    * \brief Constructor.
    * \param fName the location of the configuration file
    */
-  ConfigFile(const std::string &fName);
+  ConfigFile(const char* fName);
 
   /**
    * \brief Extract all keys.
@@ -70,7 +70,7 @@ class ConfigFile {
    * \param key the key
    * \return `false` if the configuration file cannot be found, `true` otherwise
    */
-  bool keyExists(const std::string &key) const;
+  bool keyExists(const char* key) const;
 
   /**
    * \brief Return the value at a given key.
@@ -79,7 +79,7 @@ class ConfigFile {
    * \return the value associated to the key
    */
   template <typename ValueType>
-  ValueType getValueOfKey(const std::string &key,
+  ValueType getValueOfKey(const char* key,
                           ValueType const &defaultValue) const {
     if (!keyExists(key)) return defaultValue;
 
@@ -92,8 +92,8 @@ class ConfigFile {
    * \param defaultValue default value of the given key
    * \return the value as a `string`
    */
-  std::string getValueOfKeyAsString(const std::string &key,
-                                    const std::string &defaultValue);
+  std::string getValueOfKeyAsString(const char* key,
+                                    const char* defaultValue);
 
   /**
    * \brief Return the value at a given key as a `std::vector<double>`.
@@ -102,7 +102,7 @@ class ConfigFile {
    * \return the value as a `std::vector<double>`
    */
   std::vector<double> getValueOfKeyAsStdVectorDouble(
-      const std::string &key, const std::string &defaultValue);
+      const char* key, const char* defaultValue);
 
   /**
    * \brief Return the value at a given key as a `std::vector<int>`.
@@ -110,8 +110,8 @@ class ConfigFile {
    * \param defaultValue default value of the given key
    * \return the value as a `std::vector<int>`
    */
-  std::vector<int> getValueOfKeyAsStdVectorInt(const std::string &key,
-                                               const std::string &defaultValue);
+  std::vector<int> getValueOfKeyAsStdVectorInt(const char* key,
+                                               const char* defaultValue);
 
   /**
    * \brief Convert value of type `T` to `string`.
@@ -145,23 +145,23 @@ class ConfigFile {
  private:
   void removeComment(std::string &line) const;
 
-  bool onlyWhitespace(const std::string &line) const;
+  bool onlyWhitespace(const char* line) const;
 
-  bool validLine(const std::string &line) const;
+  bool validLine(const char* line) const;
 
   void extractKey(std::string &key, size_t const &sepPos,
-                  const std::string &line) const;
+                  const char* line) const;
 
   void extractValue(std::string &value, size_t const &sepPos,
-                    const std::string &line) const;
+                    const char* line) const;
 
-  void extractContents(const std::string &line);
+  void extractContents(const char* line);
 
-  void parseLine(const std::string &line, size_t const lineNo);
+  void parseLine(const char* line, size_t const lineNo);
 
-  std::vector<double> stringToDouble(const std::string &str);
+  std::vector<double> stringToDouble(const char* str);
 
-  std::vector<int> stringToInt(const std::string &str);
+  std::vector<int> stringToInt(const char* str);
 
   std::map<std::string, std::string> contents;
   std::string fName;

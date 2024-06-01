@@ -1,4 +1,5 @@
 #include <gpd/net/eigen_classifier.h>
+#include <omp.h>
 
 namespace gpd {
 namespace net {
@@ -69,12 +70,10 @@ std::vector<float> EigenClassifier::classifyImages(
       std::vector<float> x = imageToArray(*image_list[i]);
 
       std::vector<float> predictions_i = forward(x);
-      //      std::cout << i << " -- positive score: " << yi[1] << ", negative
-      //      score: " << yi[0] << "\n";
       predictions[i] = predictions_i[1] - predictions_i[0];
     }
   }
-
+  std::cout << "end EigenClassifier::classifyImages" << std::endl;
   return predictions;
 }
 

@@ -150,11 +150,13 @@ int DoMain(int argc, char *argv[]) {
   std::vector<std::unique_ptr<candidate::Hand>> candidates =
       candidates_generator.generateGraspCandidates(cloud);
 
+#ifdef GPD_PLOT
   if (plot_candidates) {
     util::Plot plotter(hand_axes.size(), num_orientations);
     plotter.plotFingers3D(candidates, cloud.getCloudOriginal(),
         "Grasp candidates", hand_geom);
   }
+#endif
 
   return 0;
 }

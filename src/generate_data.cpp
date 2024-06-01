@@ -20,7 +20,7 @@ int DoMain(int argc, char **argv) {
   std::srand(std::time(0));
 
   // Read path to config file.
-  std::string config_filename = argv[1];
+  const char* config_filename = argv[1];
 
   // Create training data.
   DataGenerator generator(config_filename);

@@ -1,14 +1,31 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(gpd)
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_STANDARD 17)
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  MESSAGE("Clang")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  add_compile_definitions(GPD_PLOT)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  MESSAGE("Intel")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  MESSAGE("MSVC")
+endif()
 
 # Eigen library
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # PCL
-find_package(PCL 1.9 REQUIRED)
-#find_package(PCL 1.8 REQUIRED)
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  find_package(PCL 1.14.1 REQUIRED)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  find_package(PCL 1.12.1 REQUIRED)
+endif()
+
+message("PCL_INCLUDE_DIRS " ${PCL_INCLUDE_DIRS})
+message("PCL_LIBRARY_DIRS " ${PCL_LIBRARY_DIRS})
+message("PCL_DEFINITIONS " ${PCL_DEFINITIONS})
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -17,16 +34,24 @@ add_definitions(${PCL_DEFINITIONS})
 find_package(OpenCV REQUIRED)
 #find_package(OpenCV REQUIRED PATHS /usr/local NO_DEFAULT_PATH)
 
-## Set compiler optimization flags
-# set(CMAKE_CXX_FLAGS "-O3 -fopenmp -fPIC -Wno-deprecated -Wenum-compare -std=c++14")
-#set(CMAKE_CXX_FLAGS "-O3 -fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes -std=c++17")
-#set(CMAKE_CXX_FLAGS "-fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes -std=c++17")
-# set(CMAKE_CXX_FLAGS "-O3 -fopenmp -fPIC -Wno-deprecated -Wenum-compare")
-# set(CMAKE_CXX_FLAGS "-O3 -fopenmp -march=native -mfpmath=sse -funroll-loops -fPIC -Wno-deprecated -Wenum-compare") # no improvement
-# set(CMAKE_CXX_FLAGS "-frename-registers -Ofast -march=native -fopenmp -fPIC -Wno-deprecated -Wenum-compare") # no improvement
+# OpenMP
+find_package(OpenMP REQUIRED)
+if (OPENMP_FOUND)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
-#set(CMAKE_CXX_FLAGS "-fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes -std=c++17")
-set(CMAKE_CXX_FLAGS "-O3 -march=native -mtune=intel -msse4.2 -mavx2 -mfma -flto -fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes -std=c++17")
+## Set compiler optimization flags
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -fPIC -Wno-deprecated -Wenum-compare -std=c++14")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes -std=c++17")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes -std=c++17")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -fPIC -Wno-deprecated -Wenum-compare")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -march=native -mfpmath=sse -funroll-loops -fPIC -Wno-deprecated -Wenum-compare") # no improvement
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frename-registers -Ofast -march=native -fopenmp -fPIC -Wno-deprecated -Wenum-compare") # no improvement
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -flto -march=native -mtune=native -msse4.2 -mavx2 -mfma -fopenmp -fPIC -Wno-deprecated -Wenum-compare -Wno-ignored-attributes")
 
 ## Specify additional locations of header files
 include_directories(include ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
@@ -94,6 +119,8 @@ if(BUILD_DATA_GENERATION STREQUAL "ON")
   message("Building data generation module")
 endif()
 
+option(TEST_GRASP_IMAGE "Test grasp image" OFF)
+
 # Generate the shared library from the sources
 add_library(${PROJECT_NAME}_grasp_detector SHARED src/${PROJECT_NAME}/grasp_detector.cpp)
 
@@ -137,7 +164,9 @@ add_executable(${PROJECT_NAME}_cem_detect_grasps src/cem_detect_grasps.cpp)
 add_executable(${PROJECT_NAME}_detect_grasps src/detect_grasps.cpp)
 add_executable(${PROJECT_NAME}_generate_candidates src/generate_candidates.cpp)
 add_executable(${PROJECT_NAME}_label_grasps src/label_grasps.cpp)
+if(TEST_GRASP_IMAGE)
 add_executable(${PROJECT_NAME}_test_grasp_image src/tests/test_grasp_image.cpp)
+endif()
 # add_executable(${PROJECT_NAME}_test_conv_layer src/tests/test_conv_layer.cpp)
 # add_executable(${PROJECT_NAME}_test_hdf5 src/tests/test_hdf5.cpp)
 
@@ -246,12 +275,14 @@ ${PROJECT_NAME}_eigen_utils)
 target_link_libraries(${PROJECT_NAME}_sequential_importance_sampling
   ${PROJECT_NAME}_grasp_detector)
 
+if(TEST_GRASP_IMAGE)
 target_link_libraries(${PROJECT_NAME}_test_grasp_image
   ${PROJECT_NAME}_image_generator
   ${PROJECT_NAME}_classifier
   ${PROJECT_NAME}_plot
   ${PROJECT_NAME}_candidates_generator
 ${PCL_LIBRARIES})
+endif()
 
 target_link_libraries(${PROJECT_NAME}_detect_grasps
   ${PROJECT_NAME}_grasp_detector
@@ -273,8 +304,10 @@ target_link_libraries(${PROJECT_NAME}_image_generator
   ${PROJECT_NAME}_image_strategy)
 
 # Rename targets to simplify their names.
+if(TEST_GRASP_IMAGE)
 set_target_properties(${PROJECT_NAME}_test_grasp_image
   PROPERTIES OUTPUT_NAME test_grasp_image PREFIX "")
+endif()
 
 set_target_properties(${PROJECT_NAME}_cem_detect_grasps
   PROPERTIES OUTPUT_NAME cem_detect_grasps PREFIX "")

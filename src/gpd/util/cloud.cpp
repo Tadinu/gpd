@@ -4,12 +4,13 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <omp.h>
 
 namespace gpd {
 namespace util {
 
 Cloud::Cloud()
-    : cloud_original_(new PointCloudRGB), cloud_processed_(new PointCloudRGB) {
+    : cloud_original_(new PointCloudRGB), cloud_processed_(new PointCloudRGB), grand(rd()) {
   view_points_.resize(3, 1);
   view_points_ << 0.0, 0.0, 0.0;
   sample_indices_.resize(0);
@@ -23,7 +24,7 @@ Cloud::Cloud(const PointCloudRGB::Ptr &cloud,
     : cloud_processed_(new PointCloudRGB),
       cloud_original_(new PointCloudRGB),
       camera_source_(camera_source),
-      view_points_(view_points) {
+      view_points_(view_points), grand(rd()) {
   sample_indices_.resize(0);
   samples_.resize(3, 0);
   normals_.resize(3, 0);
@@ -38,7 +39,7 @@ Cloud::Cloud(const PointCloudPointNormal::Ptr &cloud,
     : cloud_processed_(new PointCloudRGB),
       cloud_original_(new PointCloudRGB),
       camera_source_(camera_source),
-      view_points_(view_points) {
+      view_points_(view_points), grand(rd()) {
   sample_indices_.resize(0);
   samples_.resize(3, 0);
   normals_.resize(3, 0);
@@ -51,7 +52,7 @@ Cloud::Cloud(const PointCloudPointNormal::Ptr &cloud, int size_left_cloud,
              const Eigen::Matrix3Xd &view_points)
     : cloud_processed_(new PointCloudRGB),
       cloud_original_(new PointCloudRGB),
-      view_points_(view_points) {
+      view_points_(view_points), grand(rd()) {
   sample_indices_.resize(0);
   samples_.resize(3, 0);
 
@@ -83,7 +84,7 @@ Cloud::Cloud(const PointCloudRGB::Ptr &cloud, int size_left_cloud,
              const Eigen::Matrix3Xd &view_points)
     : cloud_processed_(cloud),
       cloud_original_(cloud),
-      view_points_(view_points) {
+      view_points_(view_points), grand(rd()) {
   sample_indices_.resize(0);
   samples_.resize(3, 0);
   normals_.resize(3, 0);
@@ -106,10 +107,12 @@ Cloud::Cloud(const PointCloudRGB::Ptr &cloud, int size_left_cloud,
 Cloud::Cloud(const std::string &filename, const Eigen::Matrix3Xd &view_points)
     : cloud_processed_(new PointCloudRGB),
       cloud_original_(new PointCloudRGB),
-      view_points_(view_points) {
+      view_points_(view_points), grand(rd()) {
+  std::cout << "Cloud::cloud 1" << std::endl;
   sample_indices_.resize(0);
   samples_.resize(3, 0);
   normals_.resize(3, 0);
+  std::cout << "Cloud::cloud 2" << std::endl;
   cloud_processed_ = loadPointCloudFromFile(filename);
   cloud_original_ = cloud_processed_;
   camera_source_ = Eigen::MatrixXi::Ones(1, cloud_processed_->size());
@@ -122,7 +125,7 @@ Cloud::Cloud(const std::string &filename_left,
              const Eigen::Matrix3Xd &view_points)
     : cloud_processed_(new PointCloudRGB),
       cloud_original_(new PointCloudRGB),
-      view_points_(view_points) {
+      view_points_(view_points), grand(rd()) {
   sample_indices_.resize(0);
   samples_.resize(3, 0);
   normals_.resize(3, 0);
@@ -299,11 +302,7 @@ void Cloud::voxelizeCloud(float cell_size) {
     Eigen::Vector4i v4;
     v4.head(3) = EigenUtils::floorVector((pt - min_pt) / cell_size);
     v4(3) = i;
-    std::pair<std::set<Eigen::Vector4i,
-                       Cloud::UniqueVector4First3Comparator>::iterator,
-              bool>
-        res = bins.insert(v4);
-
+    const auto res = bins.insert(v4);
     if (normals_.cols() > 0) {
       const int &idx = (*res.first)(3);
       avg_normals.col(idx) += normals_.col(i);
@@ -379,7 +378,8 @@ void Cloud::subsampleSamples(int num_samples) {
     for (int i = 0; i < seq.size(); i++) {
       seq[i] = i;
     }
-    std::random_shuffle(seq.begin(), seq.end());
+
+    std::shuffle(seq.begin(), seq.end(), grand);
 
     Eigen::Matrix3Xd subsamples(3, num_samples);
     for (int i = 0; i < num_samples; i++) {
@@ -642,6 +642,7 @@ void Cloud::setNormalsFromFile(const std::string &filename) {
 
 PointCloudRGB::Ptr Cloud::loadPointCloudFromFile(
     const std::string &filename) const {
+  std::cout << "loadPointCloudFromFile " << filename << std::endl;
   PointCloudRGB::Ptr cloud(new PointCloudRGB);
   std::string extension = filename.substr(filename.size() - 3);
   printf("extension: %s\n", extension.c_str());

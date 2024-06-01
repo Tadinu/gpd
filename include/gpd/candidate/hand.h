@@ -249,7 +249,7 @@ class Hand {
    */
   int getFingerPlacementIndex() const { return finger_placement_index_; }
 
- private:
+ public:
   /**
    * \brief Calculate grasp positions (bottom, top, surface).
    * \param finger_hand the FingerHand object describing a feasible finger

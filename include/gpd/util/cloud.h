@@ -37,6 +37,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <random>
 
 #include <Eigen/Dense>
 
@@ -88,7 +89,7 @@ class Cloud {
      * \return true if they differ in at least one element, false if all
      * elements are equal
      */
-    bool operator()(const Eigen::Vector3i &a, const Eigen::Vector3i &b) {
+    bool operator()(const Eigen::Vector3i &a, const Eigen::Vector3i &b) const {
       for (int i = 0; i < a.size(); i++) {
         if (a(i) != b(i)) {
           return a(i) < b(i);
@@ -110,7 +111,7 @@ class Cloud {
      * \return true if they differ in at least one of the first three elements,
      * false otherwise
      */
-    bool operator()(const Eigen::Vector4i &a, const Eigen::Vector4i &b) {
+    bool operator()(const Eigen::Vector4i &a, const Eigen::Vector4i &b) const {
       for (int i = 0; i < a.size() - 1; i++) {
         if (a(i) != b(i)) {
           return true;
@@ -385,6 +386,8 @@ class Cloud {
 
   std::vector<int> sample_indices_;
   Eigen::Matrix3Xd samples_;
+  std::random_device rd;
+  std::mt19937 grand;
 };
 
 }  // namespace util

@@ -6,11 +6,11 @@ namespace gpd {
 namespace apps {
 namespace detect_grasps {
 
-bool checkFileExists(const std::string &file_name) {
+bool checkFileExists(const char* file_name) {
   std::ifstream file;
-  file.open(file_name.c_str());
+  file.open(file_name);
   if (!file) {
-    std::cout << "File " + file_name + " could not be found!\n";
+    std::cout << "File " << file_name << " could not be found!\n";
     return false;
   }
   file.close();
@@ -28,9 +28,9 @@ int DoMain(int argc, char *argv[]) {
     return (-1);
   }
 
-  std::string config_filename = argv[1];
-  std::string pcd_filename = argv[2];
-  std::string mesh_filename = argv[3];
+  const char* config_filename = argv[1];
+  const char* pcd_filename = argv[2];
+  const char* mesh_filename = argv[3];
   if (!checkFileExists(config_filename)) {
     printf("Error: CONFIG_FILE not found!\n");
     return (-1);
@@ -104,8 +104,10 @@ int DoMain(int argc, char *argv[]) {
   const candidate::HandSearch::Parameters &params =
       detector.getHandSearchParameters();
   util::Plot plot(params.hand_axes_.size(), params.num_orientations_);
+#ifdef GPD_PLOT
   plot.plotAntipodalHands(hands, cloud.getCloudProcessed(), "Labeled Hands",
                           params.hand_geometry_);
+#endif
 
   std::vector<std::unique_ptr<candidate::Hand>> valid_hands;
   for (size_t i = 0; i < hands.size(); i++) {
@@ -115,12 +117,15 @@ int DoMain(int argc, char *argv[]) {
       valid_hands.push_back(std::move(hands[i]));
     }
   }
+
+#ifdef GPD_PLOT
   plot.plotValidHands(valid_hands, cloud.getCloudProcessed(),
                       mesh.getCloudProcessed(), "Antipodal Hands",
                       params.hand_geometry_);
   // plot.plotFingers3D(valid_hands, cloud.getCloudProcessed(), "Antipodal
   // Hands",
   //                    params.hand_geometry_);
+#endif
 
   return 0;
 }

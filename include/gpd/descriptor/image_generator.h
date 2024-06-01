@@ -48,7 +48,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#ifdef GPD_PLOT
 #include <pcl/visualization/cloud_viewer.h>
+#endif
 
 #include <gpd/candidate/hand_set.h>
 #include <gpd/descriptor/image_strategy.h>

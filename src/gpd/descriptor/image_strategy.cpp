@@ -159,8 +159,10 @@ cv::Mat ImageStrategy::createDepthImage(
     const Eigen::Matrix3Xd &points, const Eigen::VectorXi &cell_indices) const {
   cv::Mat image(image_params_.size_, image_params_.size_, CV_32FC1,
                 cv::Scalar(0.0));
-  float avgs[image_params_.size_ * image_params_.size_] = {0};
-  float counts[image_params_.size_ * image_params_.size_] = {0};
+  float avgs[image_params_.size_ * image_params_.size_];
+  memset(avgs, 0, sizeof avgs);
+  float counts[image_params_.size_ * image_params_.size_];
+  memset(counts, 0, sizeof counts);
 
   //  double t0 = omp_get_wtime();
   for (int i = 0; i < cell_indices.rows(); i++) {
@@ -197,7 +199,8 @@ cv::Mat ImageStrategy::createShadowImage(
                 cv::Scalar(0.0));
   cv::Mat nonzero(image_params_.size_, image_params_.size_, CV_8UC1,
                   cv::Scalar(0));
-  float counts[image_params_.size_ * image_params_.size_] = {0};
+  float counts[image_params_.size_ * image_params_.size_];
+  memset(counts, 0, sizeof counts);
 
   for (int i = 0; i < cell_indices.rows(); i++) {
     const int &idx = cell_indices[i];

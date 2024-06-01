@@ -113,9 +113,11 @@ void Image12ChannelsStrategy::showImage(const cv::Mat &image) const {
                                         image_size, image_size)));
   }
 
+#if GPD_PLOT
   cv::namedWindow("Grasp Image (12 channels)", cv::WINDOW_NORMAL);
   cv::imshow("Grasp Image (12 channels)", image_out);
   cv::waitKey(0);
+#endif
 }
 
 }  // namespace descriptor

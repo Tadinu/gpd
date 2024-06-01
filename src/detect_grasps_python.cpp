@@ -436,7 +436,7 @@ extern "C" int detectGraspsInCloud(char *config_filename, float *points,
       createCloud(points, camera_index, view_points, size, num_view_points);
 
   // Detect grasp affordances.
-  std::string config_filename_str = config_filename;
+  const char* config_filename_str = config_filename;
   std::vector<Hand> hands = detectGrasps(config_filename_str, cloud);
 
   // Convert output to array of structs.
@@ -455,7 +455,7 @@ extern "C" int detectGraspsInCloudNormals(char *config_filename, float *points,
                                    size, num_view_points);
 
   // Detect grasp affordances.
-  std::string config_filename_str = config_filename;
+  const char* config_filename_str = config_filename;
   std::vector<Hand> hands = detectGrasps(config_filename_str, cloud);
 
   // Convert output to array of structs.
@@ -477,7 +477,7 @@ extern "C" int detectGraspsInFile(char *config_filename, char *pcd_filename,
   }
 
   // Detect grasp affordances.
-  std::string config_filename_str = config_filename;
+  const char* config_filename_str = config_filename;
   std::vector<Hand> hands = detectGrasps(config_filename_str, cloud);
 
   // Convert output to array of structs.
@@ -538,7 +538,7 @@ extern "C" int generateGraspCandidatesInFile(
   }
 
   // Detect grasp affordances.
-  std::string config_filename_str = config_filename;
+  const char* config_filename_str = config_filename;
   std::vector<Hand> hands = generateGraspCandidates(config_filename_str, cloud);
 
   // Convert output to array of structs.

@@ -20,7 +20,7 @@ HandGeometry::HandGeometry(double finger_width, double outer_diameter,
       init_bite_(init_bite) {}
 
 HandGeometry::HandGeometry(const std::string &filepath) {
-  util::ConfigFile config_file(filepath);
+  util::ConfigFile config_file(filepath.c_str());
   config_file.ExtractKeys();
   finger_width_ = config_file.getValueOfKey<double>("finger_width", 0.01);
   outer_diameter_ =

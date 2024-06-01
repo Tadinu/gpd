@@ -37,6 +37,7 @@ void Image1ChannelsStrategy::createImage(const util::PointList &point_list,
   Eigen::VectorXi cell_indices = findCellIndices(points_frame);
   image = createDepthImage(points_frame, cell_indices);
 
+#if GPD_PLOT
   if (is_plotting_) {
     std::string title = "Grasp Image (1 channel)";
     cv::namedWindow(title, cv::WINDOW_NORMAL);
@@ -45,6 +46,7 @@ void Image1ChannelsStrategy::createImage(const util::PointList &point_list,
     cv::imshow(title, image_rgb);
     cv::waitKey(0);
   }
+#endif
 }
 
 }  // namespace descriptor

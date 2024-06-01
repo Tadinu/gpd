@@ -9,11 +9,12 @@ void ConfigFile::removeComment(std::string &line) const {
   }
 }
 
-bool ConfigFile::onlyWhitespace(const std::string &line) const {
-  return (line.find_first_not_of(' ') == line.npos);
+bool ConfigFile::onlyWhitespace(const char* line) const {
+  auto line_str = std::string(line);
+  return (line_str.find_first_not_of(' ') == line_str.npos);
 }
 
-bool ConfigFile::validLine(const std::string &line) const {
+bool ConfigFile::validLine(const char* line) const {
   std::string temp = line;
   temp.erase(0, temp.find_first_not_of("\t "));
   if (temp[0] == '=') {
@@ -30,38 +31,41 @@ bool ConfigFile::validLine(const std::string &line) const {
 }
 
 void ConfigFile::extractKey(std::string &key, size_t const &sepPos,
-                            const std::string &line) const {
-  key = line.substr(0, sepPos);
-  if (key.find('\t') != line.npos || key.find(' ') != line.npos) {
+                            const char* line) const {
+  auto line_str = std::string(line);
+  key = line_str.substr(0, sepPos);
+  if (key.find('\t') != line_str.npos || key.find(' ') != line_str.npos) {
     key.erase(key.find_first_of("\t "));
   }
 }
 
 void ConfigFile::extractValue(std::string &value, size_t const &sepPos,
-                              const std::string &line) const {
-  value = line.substr(sepPos + 1);
+                              const char* line) const {
+  auto line_str = std::string(line);
+  value = line_str.substr(sepPos + 1);
   value.erase(0, value.find_first_not_of("\t "));
   value.erase(value.find_last_not_of("\t ") + 1);
 }
 
-void ConfigFile::extractContents(const std::string &line) {
+void ConfigFile::extractContents(const char* line) {
   std::string temp = line;
   temp.erase(0, temp.find_first_not_of("\t "));
   size_t sepPos = temp.find('=');
 
   std::string key, value;
-  extractKey(key, sepPos, temp);
-  extractValue(value, sepPos, temp);
+  extractKey(key, sepPos, temp.c_str());
+  extractValue(value, sepPos, temp.c_str());
 
-  if (!keyExists(key)) {
+  if (!keyExists(key.c_str())) {
     contents.insert(std::pair<std::string, std::string>(key, value));
   } else {
     std::cout << "CFG: Can only have unique key names!\n";
   }
 }
 
-void ConfigFile::parseLine(const std::string &line, size_t const lineNo) {
-  if (line.find('=') == line.npos) {
+void ConfigFile::parseLine(const char* line, size_t const lineNo) {
+  auto line_str = std::string(line);
+  if (line_str.find('=') == line_str.npos) {
     std::cout << "CFG: Couldn't find separator on line: " +
                      T_to_string(lineNo) + "\n";
   }
@@ -92,25 +96,25 @@ bool ConfigFile::ExtractKeys() {
     }
 
     removeComment(temp);
-    if (onlyWhitespace(temp)) {
+    if (onlyWhitespace(temp.c_str())) {
       continue;
     }
 
-    parseLine(temp, lineNo);
+    parseLine(temp.c_str(), lineNo);
   }
 
   file.close();
   return true;
 }
 
-ConfigFile::ConfigFile(const std::string &fName) { this->fName = fName; }
+ConfigFile::ConfigFile(const char* fName) { this->fName = fName; }
 
-bool ConfigFile::keyExists(const std::string &key) const {
+bool ConfigFile::keyExists(const char* key) const {
   return contents.find(key) != contents.end();
 }
 
-std::string ConfigFile::getValueOfKeyAsString(const std::string &key,
-                                              const std::string &defaultValue) {
+std::string ConfigFile::getValueOfKeyAsString(const char* key,
+                                              const char* defaultValue) {
   if (!keyExists(key)) {
     return defaultValue;
   }
@@ -119,24 +123,24 @@ std::string ConfigFile::getValueOfKeyAsString(const std::string &key,
 }
 
 std::vector<double> ConfigFile::getValueOfKeyAsStdVectorDouble(
-    const std::string &key, const std::string &defaultValue) {
+    const char* key, const char* defaultValue) {
   std::string s = getValueOfKeyAsString(key, defaultValue);
 
-  std::vector<double> vec = stringToDouble(s);
+  std::vector<double> vec = stringToDouble(s.c_str());
 
   return vec;
 }
 
 std::vector<int> ConfigFile::getValueOfKeyAsStdVectorInt(
-    const std::string &key, const std::string &defaultValue) {
+    const char* key, const char* defaultValue) {
   std::string s = getValueOfKeyAsString(key, defaultValue);
 
-  std::vector<int> vec = stringToInt(s);
+  std::vector<int> vec = stringToInt(s.c_str());
 
   return vec;
 }
 
-std::vector<double> ConfigFile::stringToDouble(const std::string &str) {
+std::vector<double> ConfigFile::stringToDouble(const char* str) {
   std::vector<double> values;
   std::stringstream ss(str);
   double v;
@@ -151,7 +155,7 @@ std::vector<double> ConfigFile::stringToDouble(const std::string &str) {
   return values;
 }
 
-std::vector<int> ConfigFile::stringToInt(const std::string &str) {
+std::vector<int> ConfigFile::stringToInt(const char* str) {
   std::vector<int> values;
   std::stringstream ss(str);
   double v;

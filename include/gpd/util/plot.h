@@ -32,8 +32,10 @@
 #ifndef PLOT_H
 #define PLOT_H
 
+#include <gpd/util/config_file.h>
+#ifdef GPD_PLOT
 #include <pcl/visualization/pcl_visualizer.h>
-
+#endif
 #include <gpd/candidate/hand.h>
 #include <gpd/candidate/hand_set.h>
 #include <gpd/candidate/local_frame.h>
@@ -46,7 +48,9 @@ namespace util {
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
 typedef pcl::PointCloud<pcl::PointNormal> PointCloudPointNormal;
 
+#ifdef GPD_PLOT
 typedef boost::shared_ptr<pcl::visualization::PCLVisualizer> PCLVisualizer;
+#endif
 
 /**
  *
@@ -64,8 +68,9 @@ class Plot {
    * \param num_orientations the number of hand orientations
    */
   Plot(int num_axes, int num_orientations)
-      : num_axes_(num_axes), num_orientations_(num_orientations) {}
+      : num_orientations_(num_orientations), num_axes_(num_axes) {}
 
+#ifdef GPD_PLOT
   void plotHandGeometry(const candidate::Hand &hand,
                         const PointCloudRGBA::Ptr &cloud,
                         const candidate::HandGeometry &hand_geom,
@@ -103,7 +108,7 @@ class Plot {
       double finger_width, double hand_depth, double hand_height,
       double volume_width, double volume_depth, double volume_height);
 
-  void plotFingers3D(
+  PCLVisualizer plotFingers3D(
       const std::vector<std::unique_ptr<candidate::HandSet>> &hand_set_list,
       const PointCloudRGBA::Ptr &cloud, std::string str,
       const candidate::HandGeometry &geometry, bool draw_all = false,
@@ -119,14 +124,14 @@ class Plot {
    * \param hand_depth the depth of the robot hand
    * \param hand_height the height of the robot hand
    */
-  void plotFingers3D(const std::vector<candidate::HandSet> &hand_set_list,
+  PCLVisualizer plotFingers3D(const std::vector<candidate::HandSet> &hand_set_list,
                      const PointCloudRGBA::Ptr &cloud, std::string str,
                      double outer_diameter, double finger_width,
                      double hand_depth, double hand_height,
                      bool draw_all = false, int num_axes = 1,
                      int num_orientations = 8);
 
-  void plotFingers3D(
+  PCLVisualizer plotFingers3D(
       const std::vector<std::unique_ptr<candidate::Hand>> &hand_list,
       const PointCloudRGBA::Ptr &cloud, const std::string &str,
       const candidate::HandGeometry &geometry, bool use_same_color = true);
@@ -151,7 +156,7 @@ class Plot {
    * \param hand_depth the depth of the robot hand
    * \param hand_height the height of the robot hand
    */
-  void plotFingers3D(const std::vector<candidate::Hand> &hand_list,
+  PCLVisualizer plotFingers3D(const std::vector<candidate::Hand> &hand_list,
                      const PointCloudRGBA::Ptr &cloud, std::string str,
                      double outer_diameter, double finger_width,
                      double hand_depth, double hand_height,
@@ -222,13 +227,13 @@ class Plot {
 
   /**
    * \brief Plot a point cloud.
-   * \param cloud_rgb the point cloud to be plotted
+   * \param cloud_rgb the poinrunviewert cloud to be plotted
    * \param str the title of the plot window
    */
   void plotCloud(const PointCloudRGBA::Ptr &cloud_rgb,
                  const std::string &title);
 
- private:
+ public:
   void addDimensions(const Eigen::Vector3d &center, const Eigen::Matrix3d &rot,
                      const Eigen::Vector3d &dimensions,
                      const Eigen::Matrix3d &colors,
@@ -322,9 +327,9 @@ class Plot {
 
   void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
                              void *viewer_void);
-
-  int num_orientations_;
-  int num_axes_;
+#endif
+  int num_orientations_ = 0;
+  int num_axes_ = 0;
 };
 
 }  // namespace util

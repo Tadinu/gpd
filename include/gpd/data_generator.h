@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <vector>
+#include <random>
 
 #include <Eigen/Dense>
 
@@ -186,6 +187,9 @@ class DataGenerator {
 
   static const std::string IMAGES_DS_NAME;
   static const std::string LABELS_DS_NAME;
+
+  std::random_device rd;
+  std::mt19937 grand;
 };
 
 }  // namespace gpd

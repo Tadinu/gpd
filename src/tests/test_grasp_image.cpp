@@ -120,7 +120,9 @@ int DoMain(int argc, char *argv[]) {
   // Plot the normals.
   util::Plot plot(hand_search_params.hand_axes_.size(),
                   hand_search_params.num_orientations_);
+#ifdef GPD_PLOT
   plot.plotNormals(cloud.getCloudProcessed(), cloud.getNormals());
+#endif
 
   // Generate grasp candidates.
   candidate::CandidatesGenerator candidates_generator(generator_params,
@@ -131,8 +133,10 @@ int DoMain(int argc, char *argv[]) {
     return -1;
   }
 
+#ifdef GPD_PLOT
   plot.plotFingers3D(hand_set_list, cloud.getCloudProcessed(),
                      "Grasp candidates", hand_geom);
+#endif
 
   const candidate::Hand &hand = *hand_set_list[0]->getHands()[0];
   std::cout << "sample: " << hand.getSample().transpose() << std::endl;
@@ -160,12 +164,14 @@ int DoMain(int argc, char *argv[]) {
   }
   std::cout << "\n";
 
+#ifdef GPD_PLOT
   plot.plotVolumes3D(
       hands, cloud.getCloudProcessed(), "Volumes", hand_geom.outer_diameter_,
       hand_geom.finger_width_, hand_geom.depth_, hand_geom.height_,
       image_geom.outer_diameter_, image_geom.depth_, image_geom.height_);
 
   plot.plotHandGeometry(hand, cloud.getCloudProcessed(), hand_geom, image_geom);
+#endif
 
   return 0;
 }

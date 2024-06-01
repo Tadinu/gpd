@@ -32,12 +32,14 @@ void Image3ChannelsStrategy::createImage(const util::PointList &point_list,
   Eigen::VectorXi cell_indices = findCellIndices(points_normals.first);
   image = createNormalsImage(points_normals.second, cell_indices);
 
+#if GPD_PLOT
   if (is_plotting_) {
     std::string title = "Grasp Image (3 channels)";
     cv::namedWindow(title, cv::WINDOW_NORMAL);
     cv::imshow(title, image);
     cv::waitKey(0);
   }
+#endif
 }
 
 }  // namespace descriptor

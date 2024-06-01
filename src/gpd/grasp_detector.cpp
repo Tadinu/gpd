@@ -2,7 +2,7 @@
 
 namespace gpd {
 
-GraspDetector::GraspDetector(const std::string &config_filename) {
+GraspDetector::GraspDetector(const char* config_filename) {
   Eigen::initParallel();
 
   // Read parameters from configuration file.
@@ -204,6 +204,7 @@ std::vector<std::unique_ptr<candidate::Hand>> GraspDetector::detectGrasps(
     return hands_out;
   }
 
+#ifdef GPD_PLOT
   // Plot samples/indices.
   if (plot_samples_) {
     if (cloud.getSamples().cols() > 0) {
@@ -215,23 +216,26 @@ std::vector<std::unique_ptr<candidate::Hand>> GraspDetector::detectGrasps(
   }
 
   if (plot_normals_) {
-    std::cout << "Plotting normals for different camera sources\n";
-    plotter_->plotNormals(cloud);
+    std::cout << "1- Plotting normals for different camera sources\n";
+    //plotter_->plotNormals(cloud);
   }
+#endif
 
   // 1. Generate grasp candidates.
   double t0_candidates = omp_get_wtime();
   std::vector<std::unique_ptr<candidate::HandSet>> hand_set_list =
       candidates_generator_->generateGraspCandidateSets(cloud);
-  printf("Generated %zu hand sets.\n", hand_set_list.size());
+  printf("1- Generated %zu hand sets.\n", hand_set_list.size());
   if (hand_set_list.size() == 0) {
     return hands_out;
   }
   double t_candidates = omp_get_wtime() - t0_candidates;
+#ifdef GPD_PLOT
   if (plot_candidates_) {
     plotter_->plotFingers3D(hand_set_list, cloud.getCloudOriginal(),
-                            "Grasp candidates", hand_geom);
+    "Grasp candidates", hand_geom);
   }
+#endif
 
   // 2. Filter the candidates.
   double t0_filter = omp_get_wtime();
@@ -240,24 +244,28 @@ std::vector<std::unique_ptr<candidate::Hand>> GraspDetector::detectGrasps(
   if (hand_set_list_filtered.size() == 0) {
     return hands_out;
   }
+#ifdef GPD_PLOT
   if (plot_filtered_candidates_) {
     plotter_->plotFingers3D(hand_set_list_filtered, cloud.getCloudOriginal(),
                             "Filtered Grasps (Aperture, Workspace)", hand_geom);
   }
+#endif
   if (filter_approach_direction_) {
     hand_set_list_filtered =
         filterGraspsDirection(hand_set_list_filtered, direction_, thresh_rad_);
+#ifdef GPD_PLOT
     if (plot_filtered_candidates_) {
       plotter_->plotFingers3D(hand_set_list_filtered, cloud.getCloudOriginal(),
                               "Filtered Grasps (Approach)", hand_geom);
     }
+#endif
   }
   double t_filter = omp_get_wtime() - t0_filter;
   if (hand_set_list_filtered.size() == 0) {
     return hands_out;
   }
 
-  // 3. Create grasp descriptors (images).
+  // 3. Create grasp descriptors (images)
   double t0_images = omp_get_wtime();
   std::vector<std::unique_ptr<candidate::Hand>> hands;
   std::vector<std::unique_ptr<cv::Mat>> images;
@@ -266,18 +274,25 @@ std::vector<std::unique_ptr<candidate::Hand>> GraspDetector::detectGrasps(
 
   // 4. Classify the grasp candidates.
   double t0_classify = omp_get_wtime();
-  std::vector<float> scores = classifier_->classifyImages(images);
-  for (int i = 0; i < hands.size(); i++) {
-    hands[i]->setScore(scores[i]);
+  if (false)
+  {
+    std::cout << "classifier_: " << classifier_ << std::endl;
+    std::vector<float> scores = classifier_->classifyImages(images);
+    std::cout << "classifier_ 2" << std::endl;
+    for (int i = 0; i < hands.size(); i++) {
+      hands[i]->setScore(scores[i]);
+    }
   }
   double t_classify = omp_get_wtime() - t0_classify;
 
   // 5. Select the <num_selected> highest scoring grasps.
   hands = selectGrasps(hands);
+#ifdef GPD_PLOT
   if (plot_valid_grasps_) {
     plotter_->plotFingers3D(hands, cloud.getCloudOriginal(), "Valid Grasps",
                             hand_geom);
   }
+#endif
 
   // 6. Cluster the grasps.
   double t0_cluster = omp_get_wtime();
@@ -292,10 +307,12 @@ std::vector<std::unique_ptr<candidate::Hand>> GraspDetector::detectGrasps(
         clusters.push_back(std::move(hands[i]));
       }
     }
+#ifdef GPD_PLOT
     if (plot_clustered_grasps_) {
       plotter_->plotFingers3D(clusters, cloud.getCloudOriginal(),
                               "Clustered Grasps", hand_geom);
     }
+#endif
   } else {
     clusters = std::move(hands);
   }
@@ -319,10 +336,13 @@ std::vector<std::unique_ptr<candidate::Hand>> GraspDetector::detectGrasps(
   printf("==========\n");
   printf(" TOTAL: %3.4fs\n", t_total);
 
+#ifdef GPD_PLOT
   if (plot_selected_grasps_) {
-    plotter_->plotFingers3D(clusters, cloud.getCloudOriginal(),
+    auto viewer = plotter_->plotFingers3D(clusters, cloud.getCloudOriginal(),
                             "Selected Grasps", hand_geom, false);
+    plotter_->runViewer(viewer);
   }
+#endif
 
   return clusters;
 }
@@ -467,6 +487,7 @@ bool GraspDetector::createGraspImages(
     return false;
   }
 
+#ifdef GPD_PLOT
   // Plot samples/indices.
   if (plot_samples_) {
     if (cloud.getSamples().cols() > 0) {
@@ -481,11 +502,12 @@ bool GraspDetector::createGraspImages(
     std::cout << "Plotting normals for different camera sources\n";
     plotter_->plotNormals(cloud);
   }
+#endif
 
   // 1. Generate grasp candidates.
   std::vector<std::unique_ptr<candidate::HandSet>> hand_set_list =
       candidates_generator_->generateGraspCandidateSets(cloud);
-  printf("Generated %zu hand sets.\n", hand_set_list.size());
+  printf("2- Generated %zu hand sets.\n", hand_set_list.size());
   if (hand_set_list.size() == 0) {
     hands_out.resize(0);
     images_out.resize(0);
@@ -495,28 +517,36 @@ bool GraspDetector::createGraspImages(
   const candidate::HandGeometry &hand_geom =
       candidates_generator_->getHandSearchParams().hand_geometry_;
 
+  std::cout << "AAAAA" << std::endl;
   // 2. Filter the candidates.
   std::vector<std::unique_ptr<candidate::HandSet>> hand_set_list_filtered =
       filterGraspsWorkspace(hand_set_list, workspace_grasps_);
+#ifdef GPD_PLOT
   if (plot_filtered_candidates_) {
     plotter_->plotFingers3D(hand_set_list_filtered, cloud.getCloudOriginal(),
                             "Filtered Grasps (Aperture, Workspace)", hand_geom);
   }
+#endif
   if (filter_approach_direction_) {
     hand_set_list_filtered =
         filterGraspsDirection(hand_set_list_filtered, direction_, thresh_rad_);
+#ifdef GPD_PLOT
     if (plot_filtered_candidates_) {
+      std::cout << "bbbbbb 1" << std::endl;
       plotter_->plotFingers3D(hand_set_list_filtered, cloud.getCloudOriginal(),
                               "Filtered Grasps (Approach)", hand_geom);
+      std::cout << "bbbbbb 2" << std::endl;
     }
+#endif
   }
 
   // 3. Create grasp descriptors (images).
   std::vector<std::unique_ptr<candidate::Hand>> hands;
   std::vector<std::unique_ptr<cv::Mat>> images;
+  std::cout << "ccccc 1" << std::endl;
   image_generator_->createImages(cloud, hand_set_list_filtered, images_out,
                                  hands_out);
-
+  std::cout << "ccccc 2" << std::endl;
   return true;
 }
 
@@ -552,8 +582,8 @@ GraspDetector::pruneGraspCandidates(
 }
 
 void GraspDetector::printStdVector(const std::vector<int> &v,
-                                   const std::string &name) const {
-  printf("%s: ", name.c_str());
+                                   const char* name) const {
+  printf("%s: ", name);
   for (int i = 0; i < v.size(); i++) {
     printf("%d ", v[i]);
   }
@@ -561,8 +591,8 @@ void GraspDetector::printStdVector(const std::vector<int> &v,
 }
 
 void GraspDetector::printStdVector(const std::vector<double> &v,
-                                   const std::string &name) const {
-  printf("%s: ", name.c_str());
+                                   const char* name) const {
+  printf("%s: ", name);
   for (int i = 0; i < v.size(); i++) {
     printf("%3.2f ", v[i]);
   }

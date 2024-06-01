@@ -6,11 +6,11 @@ namespace gpd {
 namespace apps {
 namespace detect_grasps {
 
-bool checkFileExists(const std::string &file_name) {
+bool checkFileExists(const char* file_name) {
   std::ifstream file;
-  file.open(file_name.c_str());
+  file.open(file_name);
   if (!file) {
-    std::cout << "File " + file_name + " could not be found!\n";
+    std::cout << "File " << file_name << " could not be found!\n";
     return false;
   }
   file.close();
@@ -30,8 +30,8 @@ int DoMain(int argc, char *argv[]) {
     return (-1);
   }
 
-  std::string config_filename = argv[1];
-  std::string pcd_filename = argv[2];
+  const char* config_filename = argv[1];
+  const char* pcd_filename = argv[2];
   if (!checkFileExists(config_filename)) {
     printf("Error: config file not found!\n");
     return (-1);

@@ -7,7 +7,7 @@ namespace gpd {
 const std::string DataGenerator::IMAGES_DS_NAME = "images";
 const std::string DataGenerator::LABELS_DS_NAME = "labels";
 
-DataGenerator::DataGenerator(const std::string &config_filename) {
+DataGenerator::DataGenerator(const std::string &config_filename): grand(rd()) {
   detector_ = std::make_unique<GraspDetector>(config_filename);
 
   // Read parameters from configuration file.
@@ -145,6 +145,7 @@ void DataGenerator::generateData() {
         std::vector<std::unique_ptr<cv::Mat>> images;
         bool has_grasps = detector_->createGraspImages(cloud, grasps, images);
 
+#ifdef GPD_PLOT
         if (plot_grasps) {
           // Plot plotter;
           //        plotter.plotNormals(cloud.getCloudOriginal(),
@@ -158,6 +159,7 @@ void DataGenerator::generateData() {
           //                                  hand_geom.depth_,
           //                                  hand_geom.height_);
         }
+#endif
 
         // 3. Evaluate grasps against ground truth (mesh).
         printf("Eval GT ...\n");
@@ -216,8 +218,8 @@ void DataGenerator::generateData() {
 
     if ((i + 1) % store_step == 0) {
       // Shuffle the data.
-      std::random_shuffle(train_data.begin(), train_data.end());
-      std::random_shuffle(test_data.begin(), test_data.end());
+      std::shuffle(train_data.begin(), train_data.end(), grand);
+      std::shuffle(test_data.begin(), test_data.end(), grand);
       train_offset = insertIntoHDF5(train_file_path, train_data, train_offset);
       test_offset = insertIntoHDF5(test_file_path, test_data, test_offset);
       printf("train_offset: %d, test_offset: %d\n", train_offset, test_offset);
